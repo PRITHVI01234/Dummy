@@ -1,0 +1,81 @@
+module powerflow;
+module tape;
+module residential;
+clock {
+  timezone CST6;
+  starttime '2019-07-04 00:00:00';
+  stoptime '2019-07-11 00:00:00';
+};
+object node {
+  name dist_node;
+  phases ABCN;
+  nominal_voltage 7200;
+};
+object triplex_meter {
+  name house_meter;
+  phases AS;
+  nominal_voltage 120;
+};
+object house {
+  name my_house;
+  floor_area 4500;
+  ceiling_height 15;
+  thermal_integrity_level LITTLE;
+  air_temperature 72.5;
+  thermostat_deadband 5;
+  cooling_setpoint 75;
+  cooling_COP 3.90;
+  heating_setpoint 65;
+  hvac_power_factor 0.97;
+  parent house_meter;
+};
+object multi_recorder {
+  name multi_recorder0;
+  interval 900;
+  file multi_recorder_data.csv;
+  property house_meter:measured_real_power;
+};
+object triplex_node {
+  name house_node;
+  bustype SWING;
+  nominal_voltage 120;
+  phases AS;
+};
+object transformer_configuration {
+  name house_xfmr_cfg;
+  connect_type SINGLE_PHASE_CENTER_TAPPED;
+  install_type POLETOP;
+  primary_voltage 7200;
+  secondary_voltage 120;
+  powerA_rating 50;
+  power_rating 50;
+  impedance 0.015+0.0675j;
+};
+object transformer {
+  name house_xfmr;
+  phases AS;
+  from dist_node;
+  to house_node;
+  configuration house_xfmr_cfg;
+};
+object triplex_line_conductor {
+  name house_feed_conductor;
+  geometric_mean_radius 0.0111;
+  resistance 0.97;
+};
+object triplex_line_configuration {
+  name house_feed_config;
+  diameter 0.368;
+  insulation_thickness 0.08;
+  conductor_1 house_feed_conductor;
+  conductor_2 house_feed_conductor;
+  conductor_N house_feed_conductor;
+};
+object triplex_line {
+  name house_feed;
+  length 100;
+  phases AS;
+  from house_node;
+  to house_meter;
+  configuration house_feed_config;
+}
