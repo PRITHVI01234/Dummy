@@ -95,22 +95,30 @@ async def send_buffered_data():
     global message_buffer
 
     if not message_buffer:
+        print("No data to send")
         return {"status": "success", "message": "No data to send"}
 
-    # Send the buffered data to the FastAPI endpoint
+    # Send the buffered data to the receiver
     for data in message_buffer:
-        response = requests.post("http://localhost:8000/receive_data", json=data)
-        if response.status_code != 200:
-            return {"status": "error", "message": f"Failed to send data. Status code: {response.status_code}"}
+        try:
+            print("Sending data:", data)  # Debugging log
+            response = requests.post("http://localhost:8000/receive_data", json=data)
+            if response.status_code != 200:
+                print(f"Failed to send data. Status code: {response.status_code}")
+                return {"status": "error", "message": f"Failed to send data. Status code: {response.status_code}"}
+        except Exception as e:
+            print(f"Error while sending data: {e}")
+            return {"status": "error", "message": str(e)}
 
     # Clear the buffer after sending
     message_buffer = []
+    print("Buffered data sent successfully")
     return {"status": "success", "message": "Buffered data sent successfully"}
 
-# FastAPI route to receive data
+# FastAPI route to process received data (This is used to check the data at FastAPI side, if needed)
 @app.post("/receive_data")
 async def receive_data(data: dict):
-    print("Received data in FastAPI:", data)
+    print("Received data in FastAPI:", data)  # Debugging log
     return {"status": "success", "received_data": data}
 
 # Setting up the UI
@@ -149,11 +157,9 @@ if __name__ == "__main__":
     api_thread = threading.Thread(target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000))
     api_thread.start()
 
-    # Run the websocket server in the main thread
+    # Run the WebSocket server in the main thread
     asyncio.run(main())
-
-###############################
-
+#######################
 import requests
 import time
 
@@ -162,7 +168,7 @@ API_URL = "http://localhost:8000/send_buffered_data"
 
 def fetch_buffered_data():
     try:
-        # Make a POST request to the FastAPI server to send buffered data
+        # Make a POST request to the FastAPI server to retrieve and send buffered data
         response = requests.post(API_URL)
 
         # Check if the response status code is 200 (OK)
